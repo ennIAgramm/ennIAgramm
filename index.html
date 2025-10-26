@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EnnIAgramm — Test intel·ligent</title>
+  <style>
+    :root{
+  --bg:#f6f8fb; --card:#ffffff; --accent:#4b7bec; --text:#12202b; --muted:#5b6872; --bar-bg:#eef4ff;
+  --success:#2bb673; --danger:#e95757; --radius:14px; --shadow: 0 10px 30px rgba(17,24,39,0.06);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:linear-gradient(180deg,#f8fbff 0%, #f6f8fb 100%); color:var(--text); -webkit-font-smoothing:antialiased;
+  padding:28px;
+}
+
+/* Layout principal */
+.app {
+  max-width: 1150px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr minmax(400px, 1fr); /* Columna derecha flexible */
+  gap: 22px;
+}
+
+header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+h1{margin:0;font-size:20px}
+p.lead{margin:0;color:var(--muted);font-size:13px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.left{min-height:700px}
+.question{font-size:16px;line-height:1.45;color:var(--text);margin-bottom:16px}
+.scale{display:flex;gap:10px;margin-bottom:18px}
+.scale button{flex:1;padding:12px 10px;border-radius:10px;border:1px solid rgba(17,24,39,0.06);background:transparent;font-weight:700;cursor:pointer;transition:transform .18s}
+.scale button:hover{transform:translateY(-3px)}
+.scale button.active{background:var(--accent);color:white;border:0;box-shadow:0 10px 30px rgba(75,123,236,0.16)}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.controls button{padding:8px 12px;border-radius:10px;border:0;background:#eef6ff;color:var(--text);cursor:pointer}
+.controls .danger{background:#fff0f0;color:var(--danger)}
+
+/* Panel derecho ajustable */
+.right {
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  overflow-x: hidden; /* elimina scroll horizontal */
+}
+
+.prob-title{font-weight:800;margin-bottom:10px}
+
+/* Lista de probabilidades: 3 columnas x 3 filas */
+.prob-list {
+  display: flex;
+  flex-wrap: wrap;      /* items pasan a la siguiente fila si no caben */
+  gap: 12px;            /* espacio entre items */
+  overflow: hidden;     /* elimina scroll horizontal */
+  padding-right: 0;
+}
+
+/* Cada item de probabilidad */
+.prob-item {
+  display: flex;
+  flex-direction: column; /* Label arriba, barra debajo */
+  align-items: flex-start;
+  width: calc(33.333% - 8px); /* 3 columnas */
+  min-width: 100px;
+  box-sizing: border-box;
+}
+
+/* Barra y porcentaje dentro de cada item */
+.bar-wrap {
+  width: 100%;
+  background: var(--bar-bg);
+  border-radius: 12px;
+  padding: 6px 0;
+}
+
+.bar {
+  height: 22px;
+  border-radius: 8px;
+  width: 0;
+  transition: width 450ms cubic-bezier(.2,.9,.3,1);
+  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.03);
+  background: linear-gradient(90deg,#4b7bec,#6aa8ff);
+}
+
+.label {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.percent {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.footer{grid-column:1/3;display:flex;justify-content:space-between;gap:10px;margin-top:12px}
+.pred{font-weight:800;color:var(--accent)}
+
+/* Barra de progreso general más corta */
+.progress {
+  height:10px;
+  background:#e9eef8;
+  border-radius:999px;
+  width:160px; /* ajustada */
+  position:relative;
+}
+.progress > i{
+  position:absolute;
+  left:0;
+  top:0;
+  height:100%;
+  background:var(--accent);
+  border-radius:999px;
+  width:0;
+  transition:width 350ms;
+}
+
+/* Contenedor de la imagen del eneagrama */
+.enneagram-container {
+  margin-top: 12px;       /* un poco más arriba */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* sube el contenido */
+  height: 220px;          /* menos altura */
+}
+
+.enneagram-container img {
+  max-width: 100%;          /* se adapta al ancho del panel */
+  max-height: 100%;         /* no sobrepasa el espacio disponible */
+  object-fit: contain;      /* mantiene proporción */
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.modal{position:fixed;inset:0;background:rgba(9,10,12,0.36);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-card{background:var(--card);padding:18px;border-radius:12px;max-width:720px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.12)}
+.result-card{display:flex;gap:14px;align-items:center}
+.result-badge{width:84px;height:84px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:white}
+.result-body{flex:1}
+.small{font-size:13px;color:var(--muted)}
+.settings{margin-top:12px;display:flex;gap:12px;align-items:center}
+.toggle{display:inline-flex;align-items:center;gap:8px}
+.chip{padding:6px 10px;background:#f3f8ff;border-radius:999px;font-weight:700;color:var(--muted)}
+
+.enneagram-container {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px; /* ajusta según lo que quieras */
+}
+
+#enneagramCanvas {
+  width: 100%;
+  height: 100%;
+}
+
+
+@media (max-width:980px){.app{grid-template-columns:1fr}.right{order:2}.left{order:1}}
+
+
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>EnnIAgramm — Test intel·ligent</h1>
+        <p class="lead">Respon les preguntes. El sistema intentarà detectar el teu tipus al més aviat possible i aturar-se quan tingui confiança.</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="chip">Català</div>
+        <small class="small">Prototip web • Sense servidor</small>
+      </div>
+    </header>
+
+    <main class="card left">
+      <div id="questionArea">
+        <div class="question" id="questionText">Carregant pregunta...</div>
+        <div class="scale" id="scaleButtons"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <div class="controls">
+            <button id="prevBtn">Anterior</button>
+            <button id="skipBtn">Saltar</button>
+            <button id="saveBtn">Desar resultats</button>
+            <button id="resetBtn" class="danger">Reiniciar</button>
+          </div>
+          <div style="color:var(--muted);font-weight:700" id="statusText">Pregunta 0/0</div>
+        </div>
+      </div>
+
+      <div class="settings">
+        <label class="toggle"><input type="checkbox" id="autoStop" checked /> <span class="small">Aturar automàticament en detectar</span></label>
+        <div class="small">Llindar: <strong id="thresholdLabel">90%</strong></div>
+        <input type="range" id="thresholdRange" min="70" max="98" step="1" value="90" />
+      </div>
+
+      <div style="margin-top:18px;color:var(--muted);font-size:13px">
+        <strong>Nota:</strong> Model lleuger basat en pesos manuals. Per augmentar precisió, podem integrar dades etiquetades i un model entrenat.
+      </div>
+    </main>
+
+    <aside class="card right">
+  <div class="prob-title">Probabilitats actuals</div>
+  <div class="prob-list" id="probList"></div>
+
+  <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+    <div id="predLabel" class="pred">Tipus probable: -</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div style="color:var(--muted);font-weight:700" id="progressText">Progrés 0/0</div>
+      <div class="progress"><i id="progBar"></i></div>
+    </div>
+  </div>
+
+  <!-- Aquí va la imagen del eneagrama -->
+  <div class="enneagram-container">
+  <canvas id="enneagramCanvas"></canvas>
+</div>
+</aside>
+
+
+    <div class="footer" style="grid-column:1/3">
+      <div style="display:flex;gap:12px;align-items:center"></div>
+      <div style="color:var(--muted);">EnnIAgramm — Prototip — Xavier Navarro Garcia i Sergi Alsina Moyano</div>
+    </div>
+  </div>
+
+  <!-- Modal que apareix quan detecta un tipus amb confiança -->
+  <div id="detectModal" class="modal" style="display:none">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:800">Tipus detectat</div>
+        <button id="closeModal" style="background:transparent;border:0;cursor:pointer;font-weight:700">×</button>
+      </div>
+      <div class="result-card">
+        <div id="resultBadge" class="result-badge" style="background:var(--accent)"></div>
+        <div class="result-body">
+          <div id="resultTitle" style="font-weight:800;font-size:18px">Tipus -</div>
+          <div id="resultProb" class="small" style="margin-bottom:8px">Confiança</div>
+          <div id="resultDesc" class="small">Descripció curta del tipus detectat.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+        <button id="continueBtn" class="controls">Continuar test</button>
+        <button id="acceptBtn" class="controls" style="background:var(--accent);color:white">Acceptar i aturar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Nombres personalizados para cada tipo (1-9)
+const tipusNames = [
+  "1-Perfeccionista", 
+  "2-Servicial", 
+  "3-Triumfador", 
+  "4-Artista", 
+  "5-Pensador", 
+  "6-Leal", 
+  "7-Entusiasta", 
+  "8-Líder", 
+  "9-Conciliador"
+];
+
+// nova variable global
+let currentHighlight = null; // 1..9 según la pregunta actual
+
+let detectedType = null; // 1..9 segons tipus detectat
+
+function drawEnneagram(probabilities = null) {
+  const canvas = document.getElementById('enneagramCanvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.min(w, h) / 2.5;
+
+  // posiciones de los 9 números (9 arriba)
+  const points = [];
+  for (let i = 0; i < 9; i++) {
+    const angle = -Math.PI / 2 + i * (2 * Math.PI / 9);
+    points.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+  }
+
+  ctx.clearRect(0, 0, w, h);
+
+  // círculo exterior
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = "#4b7bec";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // líneas internas
+  const lines = [
+    [0, 3, 6, 0],
+    [4, 1, 7, 5],
+    [4, 2, 8, 5]
+  ];
+  ctx.strokeStyle = "#4b7bec";
+  ctx.lineWidth = 1.5;
+  lines.forEach(line => {
+    ctx.beginPath();
+    ctx.moveTo(points[line[0]].x, points[line[0]].y);
+    for (let i = 1; i < line.length; i++) ctx.lineTo(points[line[i]].x, points[line[i]].y);
+    ctx.stroke();
+  });
+
+  // dibujar los puntos y números
+  for (let i = 0; i < 9; i++) {
+    const isHighlight = (currentHighlight === (i === 0 ? 9 : i)); // coincide con número actual
+    const baseColor = isHighlight ? "#1e5cff" : "#a6c8ff";
+
+    // círculo base
+    ctx.beginPath();
+    ctx.fillStyle = baseColor;
+    ctx.arc(points[i].x, points[i].y, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // si es el número destacado, dibujar borde más grueso y azul intenso
+    if (isHighlight) {
+      ctx.beginPath();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "#0033cc";
+      ctx.stroke();
+    }
+
+    // texto del número
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const label = i === 0 ? 9 : i;
+    ctx.fillText(label, points[i].x, points[i].y);
+  }
+}
+
+
+
+
+
+
+
+
+// Llamar a la función al cargar la página
+drawEnneagram();
+
+// Redibujar al cambiar tamaño de la ventana
+window.addEventListener('resize', drawEnneagram);
+
+
+
+    // Banc ampliat de 45 preguntes (exemple), repartides per tipus amb pesos pensats per prototip.
+    const QUESTION_BANK = [
+      {id:1, text:"M'agrada tenir les coses ordenades i em sento incòmode quan hi ha error.", weights:[2.0,0, -0.5,0,0,0,0,0,0]},
+      {id:2, text:"Em sento feliç ajudant als altres i sovint faig coses per agradar.", weights:[0,2.0,0,0,0,0,0,0,0]},
+      {id:3, text:"M'agrada destacar i que es notin els meus èxits.", weights:[0,0,2.0,0,0,0,0,0,0]},
+      {id:4, text:"Tinc una vida emocional intensa i busco autenticitat.", weights:[0,0,0,2.1,0,0,0,0,0]},
+      {id:5, text:"Valoro la informació i la reflexió profunda, i busco autonomia.", weights:[0,0,0,0,2.2,0,0,0,0]},
+      {id:6, text:"Sovint em preocupa la seguretat i busco garanties en altres.", weights:[0,0,0,0,0,2.0,0,0,0]},
+      {id:7, text:"M'encanta la novetat i evito les emocions negatives a través d'activitats.", weights:[0,0,0,0,0,0,2.0,0,0]},
+      {id:8, text:"M'agrada tenir control i no em fa por enfrontar-me als altres.", weights:[0,0,0,0,0,0,0,2.2,0]},
+      {id:9, text:"Prefereixo la calma i sovint evito els conflictes.", weights:[0,0,0,0,0,0,0,0,2.0]},
+      {id:10, text:"Quan veig injustícies, sento la necessitat d'actuar fermament.", weights:[0.3,0,0,0,0,0,0,2.0,0]},
+      {id:11, text:"M'importa molt la connexió emocional amb les persones properes.", weights:[0,1.8,0,0.4,0,0,0,0,0]},
+      {id:12, text:"Em motiva l'èxit i treballo per tenir una imatge competent.", weights:[0,0,1.8,0,0,0,0,0,0]},
+      {id:13, text:"Em sento segur quan tinc coneixement i espai personal.", weights:[0,0,0,0,1.7,0.6,0,0,0]},
+      {id:14, text:"Sento ansietat enfront de l'incert i busco suport i plans de seguretat.", weights:[0,0,0,0,0.1,1.6,0,0,0]},
+      {id:15, text:"Prefereixo mirar el costat positiu i planificar activitats engrescadores.", weights:[0,0,0,0,0,0,1.8,0,0]},
+      {id:16, text:"Quan sorgeix un conflicte, em poso en primera línia per defensar el que crec.", weights:[0.1,0,0,0,0,0,0,2.0,0]},
+      {id:17, text:"Procuro evitar tensions adaptant-me a la situació.", weights:[0,0,0,0,0,0,0,-0.1,1.9]},
+      {id:18, text:"M'interessa l'expressió personal i la complexitat emocional.", weights:[0,0,0,1.4,0,0,0,0,0.2]},
+      {id:19, text:"Sento que ser útil em dóna un propòsit clar.", weights:[0,1.4,0,0,0,0,0,0,0]},
+      {id:20, text:"M'agrada liderar i prendre decisions que afecten el grup.", weights:[0,0,0,0,0,0,0,1.9,0]},
+      {id:21, text:"Em costa mostrar emocions profundes i prefereixo introspecció.", weights:[0,0,0,1.1,1.2,0,0,0,0]},
+      {id:22, text:"Busco aprovació a través dels meus èxits i resultats.", weights:[0,0,1.4,0,0,0,0,0,0]},
+      {id:23, text:"Quan em sento insegur, planifico i busco riscos calculats.", weights:[0,0,0,0,0.6,1.2,0,0,0]},
+      {id:24, text:"Tinc tendència a dispersar-me buscant noves opcions quan m'avorreixo.", weights:[0,0,0,0,0,0,1.7,0,0]},
+      {id:25, text:"Sento que la meva presència ha de ser ferma per evitar ser enganyat.", weights:[0,0,0,0,0,0,0,1.8,0]},
+      {id:26, text:"M'agrada crear harmonia i evitar polèmiques a la feina o la família.", weights:[0,0,0,0,0,0,0,0,1.8]},
+      {id:27, text:"Em centro en la qualitat i la correcció dels detalls.", weights:[1.6,0,0,0,0,0,0,0,0]},
+      {id:28, text:"Quan algú necessita ajuda, sóc de les primeres persones que s'ofereixen.", weights:[0,1.7,0,0,0,0,0,0,0]},
+      {id:29, text:"M'esforço per ser eficient i visible per la meva feina.", weights:[0,0,1.7,0,0,0,0,0,0]},
+      {id:30, text:"Sento nostàlgia i busco identitat a través de la meva sensibilitat.", weights:[0,0,0,1.6,0,0,0,0,0]},
+      {id:31, text:"Valoro la llibertat mental i separar-me del soroll social.", weights:[0,0,0,0,1.9,0,0,0,0]},
+      {id:32, text:"M'angoixo pensant les possibles conseqüències negatives.", weights:[0,0,0,0,0,1.9,0,0,0]},
+      {id:33, text:"Busco intensament activitats i projectes que em facin sentir viu.", weights:[0,0,0,0,0,0,1.9,0,0]},
+      {id:34, text:"Prefereixo afrontar i imposar respecte per protegir els meus.", weights:[0,0,0,0,0,0,0,2.1,0]},
+      {id:35, text:"Sovint em poso en segon pla per no provocar conflicte.", weights:[0,0,0,0,0,0,0,0,1.95]},
+      {id:36, text:"Tinc cura molt la coherència moral i la meva conducta.", weights:[1.4,0,0,0,0,0,0,0,0]},
+      {id:37, text:"M'emociono ajudant els altres i espero connexió emocional.", weights:[0,1.5,0,0,0,0,0,0,0]},
+      {id:38, text:"M'agrada brillar socialment i obtenir reconeixement extern.", weights:[0,0,1.6,0,0,0,0,0,0]},
+      {id:39, text:"Tinc una sensibilitat artística que sovint em fa sentir diferent.", weights:[0,0,0,1.5,0,0,0,0,0]},
+      {id:40, text:"Prefereixo observar i aprendre abans d'actuar.", weights:[0,0,0,0,1.6,0,0,0,0]},
+      {id:41, text:"Sento que la preparació i la previsió són claus per sentir-me segur.", weights:[0,0,0,0,0.3,1.4,0,0,0]},
+      {id:42, text:"Quan tinc energia, busco moltes opcions i noves experiències.", weights:[0,0,0,0,0,0,1.6,0,0]},
+      {id:43, text:"M'agrada liderar causes i protegir als més febles.", weights:[0.2,0,0,0,0,0,0,1.9,0]},
+      {id:44, text:"Procuro evadir el conflicte i conservar la pau en les relacions.", weights:[0,0,0,0,0,0,0,0,1.8]},
+      {id:45, text:"Tinc criteris morals estrictes i m'esforço a ser just.", weights:[1.3,0,0,0,0,0,0,0,0]},
+      {id:46, text:"Prefereixo tenir tot planificat abans de començar qualsevol projecte.", weights:[1.8,0,0,0,0,0,0,0,0]}, // 1
+      {id:47, text:"M'agrada ajudar a qui està en dificultats encara que em costi temps.", weights:[0,2.0,0,0,0,0,0,0,0]}, // 2
+      {id:48, text:"Em motiva aconseguir el reconeixement en el meu treball.", weights:[0,0,2.0,0,0,0,0,0,0]}, // 3
+      {id:49, text:"Sento una intensitat emocional que em fa valorar l’art i la creativitat.", weights:[0,0,0,2.0,0,0,0,0,0]}, // 4
+      {id:50, text:"Gaudeixo investigant i aprenent coses noves de forma independent.", weights:[0,0,0,0,2.0,0,0,0,0]}, // 5
+      {id:51, text:"Em preocupa la seguretat i m’agrada tenir tot controlat.", weights:[0,0,0,0,0,2.0,0,0,0]}, // 6
+      {id:52, text:"Busco activitats noves i emocionants per mantenir-me animat.", weights:[0,0,0,0,0,0,2.0,0,0]}, // 7
+      {id:53, text:"Prefereixo liderar i prendre decisions fermes en situacions difícils.", weights:[0,0,0,0,0,0,0,2.0,0]}, // 8
+      {id:54, text:"Sento que la calma i la paciència són importants per la convivència.", weights:[0,0,0,0,0,0,0,0,2.0]}, // 9
+      {id:55, text:"Tinc cura dels detalls i em sento responsable de la qualitat.", weights:[1.7,0,0,0,0,0,0,0,0]}, // 1
+      {id:56, text:"M’agrada fer favors i ajudar sense esperar res a canvi.", weights:[0,2.1,0,0,0,0,0,0,0]}, // 2
+      {id:57, text:"M’esforço per destacar i aconseguir el millor resultat possible.", weights:[0,0,2.1,0,0,0,0,0,0]}, // 3
+      {id:58, text:"Tinc una vida emocional intensa i busco profunditat en les relacions.", weights:[0,0,0,2.1,0,0,0,0,0]}, // 4
+      {id:59, text:"M’agrada aprendre i tenir autonomia intel·lectual.", weights:[0,0,0,0,2.1,0,0,0,0]}, // 5
+      {id:60, text:"Em sento més segur quan hi ha regles clares i estructures establertes.", weights:[0,0,0,0,0,2.1,0,0,0]}, // 6
+      {id:61, text:"Evito situacions monòtones buscant noves experiències.", weights:[0,0,0,0,0,0,2.1,0,0]}, // 7
+      {id:62, text:"M’agrada controlar situacions difícils per protegir els altres.", weights:[0,0,0,0,0,0,0,2.1,0]}, // 8
+      {id:63, text:"Prefereixo evitar conflictes per mantenir l’harmonia.", weights:[0,0,0,0,0,0,0,0,2.1]}, // 9
+      {id:64, text:"M’esforço a ser just i correcte en totes les meves decisions.", weights:[1.8,0,0,0,0,0,0,0,0]}, // 1
+      {id:65, text:"M’agrada donar suport emocional als altres.", weights:[0,2.2,0,0,0,0,0,0,0]}, // 2
+      {id:66, text:"Em motiva tenir èxit i reconeixement personal.", weights:[0,0,2.2,0,0,0,0,0,0]}, // 3
+      {id:67, text:"Tinc una gran sensibilitat artística i busco autenticitat.", weights:[0,0,0,2.2,0,0,0,0,0]}, // 4
+      {id:68, text:"M’agrada explorar idees i conceptes profunds de forma independent.", weights:[0,0,0,0,2.2,0,0,0,0]}, // 5
+      {id:69, text:"Em sento més còmode quan hi ha seguretat i garanties.", weights:[0,0,0,0,0,2.2,0,0,0]}, // 6
+      {id:70, text:"M’agrada participar en activitats plenes d’energia i novetat.", weights:[0,0,0,0,0,0,2.2,0,0]}  // 7
+        
+    ];
+
+    // Descripcions breus per cada tipus (per mostrar quan detecta)
+    const TYPE_DESCRIPTIONS = {
+      1: {name:'1 — El Perfeccionista', desc:'Conscient de la correcció i l’ètica. Busca millorar coses i ser just.' , color:'#2f6f9f'},
+      2: {name:'2 — L’Ajudador', desc:'Empàtic, orientat a les relacions. Troba el seu valor ajudant als altres.' , color:'#c75a97'},
+      3: {name:'3 — El Triomfador', desc:'Competitiu i orientat al resultat. Vol destacar i tenir èxit.' , color:'#f39c12'},
+      4: {name:'4 — L’Artístic', desc:'Intens, creatiu i emocionalment profund. Busca autenticitat.' , color:'#8e44ad'},
+      5: {name:'5 — El Pensador', desc:'Reservat, analític i autònom. Valora el coneixement.' , color:'#34495e'},
+      6: {name:'6 — El Loyal', desc:'Cautelós i compromès amb la seguretat i les xarxes de suport.' , color:'#16a085'},
+      7: {name:'7 — L’Entusiasta', desc:'Optimista, busca novetat i evita el malestar.' , color:'#d35400'},
+      8: {name:'8 — El Líder', desc:'Ferm i assertiu, busca control i protegir el seu entorn.' , color:'#c0392b'},
+      9: {name:'9 — El Conciliador', desc:'Còmode, conciliador i tranquil. Evita els conflictes.' , color:'#27ae60'}
+    };
+
+    // Carreres i consells segons tipus de l'eneagrama
+const CAREER_PLANS = {
+  1: { 
+    careers: [
+      "Auditor/a", "Advocat/da de drets humans", "Enginyer/a de processos", "Gestor/a de qualitat",
+      "Project Manager", "Consultor/a de compliance", "Inspectora/o de seguretat alimentària",
+      "Professor/a de matemàtiques o ciències", "Assessor/a financer/a", "Editor/a tècnic"
+    ], 
+    tips: "Centra't en estructures, normes i excel·lència. La teva atenció al detall i ètica et farà destacar i guanyar reconeixement." 
+  },
+  2: { 
+    careers: [
+      "Treballador/a social", "Infermer/a", "Psicòleg/ga", "Professor/a",
+      "Coach de vida", "Orientador/a laboral", "Terapeuta ocupacional",
+      "Consultor/a en recursos humans", "Voluntariat internacional", "Relacions públiques"
+    ], 
+    tips: "Utilitza la teva empatia i capacitat de connexió per ajudar altres i liderar equips. Troba entorns on puguis marcar la diferència." 
+  },
+  3: { 
+    careers: [
+      "Directiu/va", "Venedor/a", "Emprenedor/a", "Consultor/a de negoci",
+      "Publicista", "Coach executiu", "Gestor/a de marca personal",
+      "Enginyer/a de vendes", "Project Manager", "Marketing Manager", "Politic/a"
+    ], 
+    tips: "Aprofita la teva ambició i orientació a resultats. Treballa en projectes amb visibilitat i oportunitat de reconeixement." 
+  },
+  4: { 
+    careers: [
+      "Artista", "Escriptor/a", "Dissenyador/a", "Músic/a",
+      "Actor/riu", "Poeta", "Fotògraf/a", "Disseny de moda", "Terapeuta artístic", "Guionista"
+    ], 
+    tips: "Canalitza les emocions i creativitat en projectes originals i autèntics. La teva sensibilitat et permet crear impacte emocional." 
+  },
+  5: { 
+    careers: [
+      "Investigador/a", "Programador/a", "Científic/a de dades", "Analista",
+      "Enginyer/a de software", "Consultor/a tecnològic", "Matemàtic/a", "Arquitecte de dades",
+      "Escriptor/a tècnic", "Bibliotecari/a", "Acadèmic/a", "Físic/a teòric"
+    ], 
+    tips: "Treballa en entorns que valorin el pensament profund i la independència. Prioritza projectes d’anàlisi i recerca." 
+  },
+  6: { 
+    careers: [
+      "Consultor/a de seguretat", "Analista de riscos", "Administratiu/va", "Advocat/da",
+      "Auditor/a intern/a", "Coordinador/a de projectes", "Planificador/a d’emergències",
+      "Policia/Protecció civil", "Supervisor/a d’equips", "Enginyer/a de seguretat"
+    ], 
+    tips: "Aprofita la teva prudència i capacitat de planificació per anticipar problemes i gestionar riscos amb eficàcia." 
+  },
+  7: { 
+    careers: [
+      "Organitzador/a d'esdeveniments", "Entrepreneur", "Consultor/a creatiu", "Coach de vida",
+      "Marketing digital", "Product Manager", "Influencer o creador/a de contingut", "Guiatge turístic",
+      "Project Manager innovació", "Viatger/a professional"
+    ], 
+    tips: "Explora noves oportunitats i mantingues la motivació alta; evita avorriment i rutines. La teva energia és clau per inspirar altres." 
+  },
+  8: { 
+    careers: [
+      "Directiu/va", "Líder d'equip", "Emprenedor/a", "Advocat/da",
+      "Polític/a", "Gerent/a de projectes", "Consultor/a de negocis", "Gestor/a d'equips grans",
+      "Forense", "Executiu/a empresarial", "Cap d’operacions"
+    ], 
+    tips: "Utilitza la teva assertivitat i força per liderar projectes, protegir equips i prendre decisions importants." 
+  },
+  9: { 
+    careers: [
+      "Mediador/a", "Coach personal", "Psicòleg/ga", "Administrador/va tranquil",
+      "Consultor/a de recursos humans", "Coordinador/a de projectes", "Assessor/a educatiu",
+      "Treballador/a social", "Facilitador/a d’equips", "Gestor/a de comunitat"
+    ], 
+    tips: "Mantingues l’harmonia i ajuda a coordinar equips; la calma i empatia són la teva gran força." 
+  }
+};
+
+    // Model sense servidor: multiplicatiu amb softmax
+    class EnneagramModel{
+      constructor(n, questions){ this.n=n; this.questions=new Map(); questions.forEach(q=>this.questions.set(q.id,q)); this.reset(); }
+      reset(){ this.scores = Array(this.n).fill(1.0); this.answered = {}; }
+      _norm(r){ return (r-3)/2.0; }
+      answer(qid, r){ this.answered[qid]=r; const q=this.questions.get(qid); const norm=this._norm(r); for(let i=0;i<this.n;i++){ const w = q.weights[i]||0; const delta = w*norm; this.scores[i]*=Math.exp(delta); } this._stabilize(); }
+      _stabilize(){ const mean=this.scores.reduce((a,b)=>a+b,0)/this.scores.length||1; this.scores=this.scores.map(s=>s/mean); }
+      getProbabilities(temp=0.8){ const exps=this.scores.map(s=>Math.exp(s/temp)); const tot=exps.reduce((a,b)=>a+b,0); if(tot===0) return Array(this.n).fill(1/this.n); return exps.map(e=>e/tot); }
+      topN(n=3){ const probs=this.getProbabilities(); const arr=probs.map((p,i)=>({type:i+1,prob:p})); arr.sort((a,b)=>b.prob-a.prob); return arr.slice(0,n); }
+    }
+
+    // UI binding
+    const model = new EnneagramModel(9, QUESTION_BANK);
+    const order = QUESTION_BANK.map(q=>q.id);
+    let currentIndex = 0;
+
+    const qText = document.getElementById('questionText');
+    const scaleButtons = document.getElementById('scaleButtons');
+    const probList = document.getElementById('probList');
+    const statusText = document.getElementById('statusText');
+    const predLabel = document.getElementById('predLabel');
+    const progBar = document.getElementById('progBar');
+    const progressText = document.getElementById('progressText');
+    const modal = document.getElementById('detectModal');
+    const resultBadge = document.getElementById('resultBadge');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultProb = document.getElementById('resultProb');
+    const resultDesc = document.getElementById('resultDesc');
+    const closeModal = document.getElementById('closeModal');
+    const continueBtn = document.getElementById('continueBtn');
+    const acceptBtn = document.getElementById('acceptBtn');
+    const autoStopCheckbox = document.getElementById('autoStop');
+    const thresholdRange = document.getElementById('thresholdRange');
+    const thresholdLabel = document.getElementById('thresholdLabel');
+
+    function renderScale(){
+  const labels = ["Molt poc", "Poc", "Neutre", "Bastant", "Molt"];
+  scaleButtons.innerHTML='';
+  for(let v=1;v<=5;v++){
+    const b=document.createElement('button');
+    b.textContent = labels[v-1];  // mostrar el text
+    b.onclick = () => selectAnswer(v); // valor segueix sent 1..5
+    scaleButtons.appendChild(b);
+  }
+}
+
+
+    function renderProbList(){
+      const probs = model.getProbabilities();
+  probList.innerHTML='';
+  probs.forEach((p,i)=>{
+    const item=document.createElement('div'); 
+    item.className='prob-item';
+    const label=document.createElement('div'); 
+    label.className='label'; 
+    label.textContent = tipusNames[i]; // usa nombres personalizados
+    const barWrap=document.createElement('div'); 
+    barWrap.className='bar-wrap';
+    const bar=document.createElement('div'); 
+    bar.className='bar'; 
+    bar.style.width=(p*100)+'%';
+    barWrap.appendChild(bar);
+    const pct=document.createElement('div'); 
+    pct.className='percent'; 
+    pct.textContent=(p*100).toFixed(1)+'%';
+    item.appendChild(label); 
+    item.appendChild(barWrap); 
+    item.appendChild(pct);
+    probList.appendChild(item);
+      });
+    }
+
+    function loadQuestion(index){
+      if(index<0) index=0; if(index>=order.length) index=order.length-1; currentIndex=index;
+      const qid=order[index]; const q=QUESTION_BANK.find(x=>x.id===qid);
+      qText.textContent=(index+1)+'. '+q.text; statusText.textContent='Pregunta '+(index+1)+'/'+order.length; progressText.textContent='Progrés '+(Object.keys(model.answered).length)+'/'+order.length; updateProgress();
+      // marca prèvia
+      const existing = model.answered[qid]; Array.from(scaleButtons.children).forEach(btn=>btn.classList.remove('active')); if(existing) scaleButtons.children[existing-1].classList.add('active');
+    }
+
+    function updateProgress(){ const pct = (Object.keys(model.answered).length / order.length) * 100; progBar.style.width = pct + '%'; }
+
+   function selectAnswer(v){
+  const qid = order[currentIndex];
+  model.answer(qid, v);
+
+  // actualizar botones
+  Array.from(scaleButtons.children).forEach(b=>b.classList.remove('active'));
+  scaleButtons.children[v-1].classList.add('active');
+
+  // calcular highlight global según probabilidades actuales
+  const probs = model.getProbabilities();
+  if(currentHighlight === null){
+    // primer highlight: el tipo con mayor probabilidad
+    let maxIndex = 0;
+    for(let i=1;i<probs.length;i++){
+      if(probs[i] > probs[maxIndex]) maxIndex = i;
+    }
+    currentHighlight = maxIndex + 1;
+  } else {
+    // solo cambiar si otro tipo supera al actual
+    const currentProb = probs[currentHighlight-1];
+    for(let i=0;i<probs.length;i++){
+      if(probs[i] > currentProb){
+        currentHighlight = i + 1;
+        break;
+      }
+    }
+  }
+
+  drawEnneagram();        // redibujar eneagrama
+
+  // auto advance
+  if(currentIndex < order.length-1) loadQuestion(currentIndex+1);
+
+  renderProbList();
+  updatePrediction();
+  checkAutoDetect();
+}
+
+
+
+    function skipQuestion(){ if(currentIndex<order.length-1) loadQuestion(currentIndex+1); }
+    function prevQuestion(){ if(currentIndex>0) loadQuestion(currentIndex-1); }
+
+    function updatePrediction(){ const top = model.topN(1)[0]; predLabel.textContent = `Tipus probable: ${top.type} (${(top.prob*100).toFixed(1)}%)`; }
+
+    function resetTest(){ if(confirm('Segur que vols reiniciar el test? Totes les respostes es perdran.')){ model.reset(); renderProbList(); loadQuestion(0); updatePrediction(); } }
+
+    function saveResults(){ const probs = model.getProbabilities(); const top3 = model.topN(3); const data = { timestamp: new Date().toISOString(), answers: model.answered, probabilities: probs, top3 }; const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='enneagram_results.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+    // Detecció automàtica: llindar i diferència
+   function checkAutoDetect(){
+  const autoStop = autoStopCheckbox.checked;
+  if(!autoStop) return;
+  
+  const answeredCount = Object.keys(model.answered).length;
+  if(answeredCount < 9) return; // obligatori contestar mínim 9 preguntes
+
+  const threshold = parseInt(thresholdRange.value)/100.0;
+  const probs = model.getProbabilities();
+  const sorted = probs.map((p,i)=>({i:i+1,p})).sort((a,b)=>b.p-a.p);
+  const top = sorted[0];
+  // només atura si confiança >= llindar
+  if(top.p >= threshold){
+    showDetectModal(top.i, top.p, sorted[1].i, sorted[1].p);
+  }
+}
+
+
+   function showDetectModal(type, prob, secondType, secondProb){
+  detectedType = type; // <-- aquí guardem el tipus detectat
+  drawEnneagram();     // redibuixem amb el cercle correcte més fosc
+
+  const info = TYPE_DESCRIPTIONS[type];
+  resultBadge.style.background = info.color;
+  resultBadge.textContent = type;
+  resultTitle.textContent = info.name;
+  resultProb.textContent = `Confiança: ${(prob*100).toFixed(1)}%  (segon: ${secondType} ${(secondProb*100).toFixed(1)}%)`;
+  resultDesc.textContent = info.desc;
+  modal.style.display='flex';
+}
+
+    function acceptDetection(){
+  // bloquejar UI
+  disableInputs();
+
+  // atura detecció automàtica
+  detectedType = null;         // ja no hi ha tipus detectant
+  currentHighlight = null;     // elimina número destacat
+  drawEnneagram();             // redibuixa sense destacar
+
+  // amaga modal
+  modal.style.display = 'none';
+
+  // mostra resultat + planing al panell esquerre
+  const top = model.topN(1)[0];
+  showFinalResult(top.type, top.prob);
+
+  // opcional: si checkAutoDetect s'està cridant en intervals, afegeix flag
+  autoStopCheckbox.checked = false; // així no tornarà a cridar modal
+}
+
+
+    function continueAfterModal(){ modal.style.display='none'; }
+
+    function showFinalResult(type, prob){
+  const main = document.querySelector('.left');
+  main.innerHTML = '';
+
+  // --- Targeta del tipus detectat ---
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.padding = '20px';
+  card.style.display = 'flex';
+  card.style.flexDirection = 'column';
+  card.style.gap = '16px';
+  card.style.background = 'var(--bar-bg)';        // fons blau clar
+  card.style.border = '1px solid #c5d9f1';
+  card.style.boxShadow = '0 4px 12px rgba(75, 123, 236, 0.12)';
+
+  const header = document.createElement('div');
+  header.style.display = 'flex';
+  header.style.alignItems = 'center';
+  header.style.gap = '16px';
+
+  const badge = document.createElement('div');
+  badge.className = 'result-badge';
+  badge.style.background = TYPE_DESCRIPTIONS[type].color;
+  badge.textContent = type;
+  badge.style.width = '70px';
+  badge.style.height = '70px';
+  badge.style.fontSize = '22px';
+  badge.style.flexShrink = '0';
+
+  const body = document.createElement('div');
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  body.style.gap = '6px';
+
+  const title = document.createElement('div');
+  title.style.fontWeight = '700';
+  title.style.fontSize = '20px';
+  title.textContent = TYPE_DESCRIPTIONS[type].name;
+
+  const probText = document.createElement('div');
+  probText.style.fontSize = '14px';
+  probText.style.color = 'var(--muted)';
+  probText.textContent = `Confiança: ${(prob*100).toFixed(1)}%`;
+
+  const desc = document.createElement('div');
+  desc.style.fontSize = '14px';
+  desc.style.color = 'var(--text)';
+  desc.textContent = TYPE_DESCRIPTIONS[type].desc;
+
+  body.appendChild(title);
+  body.appendChild(probText);
+  body.appendChild(desc);
+
+  header.appendChild(badge);
+  header.appendChild(body);
+  card.appendChild(header);
+
+  const controls = document.createElement('div');
+  controls.style.display = 'flex';
+  controls.style.gap = '10px';
+  controls.style.marginTop = '16px';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'controls';
+  saveBtn.textContent = 'Desar resultats';
+  saveBtn.onclick = saveResults;
+
+  const restartBtn = document.createElement('button');
+  restartBtn.className = 'controls';
+  restartBtn.textContent = 'Reiniciar test';
+  restartBtn.onclick = ()=>location.reload();
+
+  controls.appendChild(saveBtn);
+  controls.appendChild(restartBtn);
+  card.appendChild(controls);
+
+  main.appendChild(card);
+
+  // --- Planing professional amb més espai ---
+  const planCard = document.createElement('div');
+  planCard.className = 'card';
+  planCard.style.padding = '20px';
+  planCard.style.marginTop = '24px';
+  planCard.style.display = 'flex';
+  planCard.style.flexDirection = 'column';
+  planCard.style.gap = '12px';
+  planCard.style.background = 'var(--bar-bg)';      // fons blau clar
+  planCard.style.border = '1px solid #c5d9f1';
+  planCard.style.boxShadow = '0 4px 12px rgba(75, 123, 236, 0.12)';
+
+  const planTitle = document.createElement('div');
+  planTitle.style.fontWeight = '700';
+  planTitle.style.fontSize = '16px';
+  planTitle.textContent = 'Orientació professional (només recomanacions)';
+
+  const warning = document.createElement('div');
+  warning.style.fontSize = '13px';
+  warning.style.color = 'var(--muted)';
+  warning.style.marginBottom = '6px';
+  warning.textContent = 'No és obligatori seguir aquestes carreres; només t’ajuda a orientar-te i descobrir oportunitats.';
+
+  const careerList = document.createElement('ul');
+  careerList.style.margin = '0';
+  careerList.style.paddingLeft = '20px';
+  careerList.style.fontSize = '14px';
+  careerList.style.color = 'var(--text)';
+  careerList.style.listStyleType = 'disc';
+  careerList.style.gap = '8px';
+  CAREER_PLANS[type].careers.forEach(c => {
+    const li = document.createElement('li');
+    li.style.marginBottom = '8px'; // més espai entre punts
+    li.textContent = c;
+    careerList.appendChild(li);
+  });
+
+  const tips = document.createElement('div');
+  tips.style.fontSize = '14px';
+  tips.style.color = 'var(--muted)';
+  tips.style.marginTop = '10px';
+  tips.textContent = 'Com treure el màxim profit: ' + CAREER_PLANS[type].tips;
+
+  planCard.appendChild(planTitle);
+  planCard.appendChild(warning);
+  planCard.appendChild(careerList);
+  planCard.appendChild(tips);
+
+  main.appendChild(planCard);
+}
+
+    function disableInputs(){ Array.from(document.querySelectorAll('button')).forEach(b => { if(b.id!=='saveBtn') b.disabled=true; }); }
+
+    // events
+    document.getElementById('prevBtn').onclick = prevQuestion;
+    document.getElementById('skipBtn').onclick = skipQuestion;
+    document.getElementById('resetBtn').onclick = resetTest;
+    document.getElementById('saveBtn').onclick = saveResults;
+    closeModal.onclick = ()=>modal.style.display='none';
+    continueBtn.onclick = continueAfterModal;
+    acceptBtn.onclick = acceptDetection;
+    thresholdRange.oninput = ()=>{ thresholdLabel.textContent = thresholdRange.value + '%'; }
+
+    // init
+    renderScale(); renderProbList(); loadQuestion(0); updatePrediction();
+    new ResizeObserver(()=>renderProbList()).observe(document.getElementById('probList'));
+  </script>
+</body>
+</html>

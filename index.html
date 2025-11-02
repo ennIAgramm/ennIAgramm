@@ -303,10 +303,10 @@ p.lead{margin:0;color:var(--muted);font-size:13px}
 const tipusNames = [
   "1-Perfeccionista", 
   "2-Servicial", 
-  "3-Triumfador", 
+  "3-Triomfador", 
   "4-Artista", 
   "5-Pensador", 
-  "6-Leal", 
+  "6-Lleial", 
   "7-Entusiasta", 
   "8-Líder", 
   "9-Conciliador"
@@ -483,11 +483,11 @@ window.addEventListener('resize', drawEnneagram);
     // Descripcions breus per cada tipus (per mostrar quan detecta)
     const TYPE_DESCRIPTIONS = {
       1: {name:'1 — El Perfeccionista', desc:'Conscient de la correcció i l’ètica. Busca millorar coses i ser just.' , color:'#2f6f9f'},
-      2: {name:'2 — L’Ajudador', desc:'Empàtic, orientat a les relacions. Troba el seu valor ajudant als altres.' , color:'#c75a97'},
+      2: {name:'2 — El Servicial', desc:'Empàtic, orientat a les relacions. Troba el seu valor ajudant als altres.' , color:'#c75a97'},
       3: {name:'3 — El Triomfador', desc:'Competitiu i orientat al resultat. Vol destacar i tenir èxit.' , color:'#f39c12'},
       4: {name:'4 — L’Artístic', desc:'Intens, creatiu i emocionalment profund. Busca autenticitat.' , color:'#8e44ad'},
       5: {name:'5 — El Pensador', desc:'Reservat, analític i autònom. Valora el coneixement.' , color:'#34495e'},
-      6: {name:'6 — El Loyal', desc:'Cautelós i compromès amb la seguretat i les xarxes de suport.' , color:'#16a085'},
+      6: {name:'6 — El Lleial', desc:'Cautelós i compromès amb la seguretat i les xarxes de suport.' , color:'#16a085'},
       7: {name:'7 — L’Entusiasta', desc:'Optimista, busca novetat i evita el malestar.' , color:'#d35400'},
       8: {name:'8 — El Líder', desc:'Ferm i assertiu, busca control i protegir el seu entorn.' , color:'#c0392b'},
       9: {name:'9 — El Conciliador', desc:'Còmode, conciliador i tranquil. Evita els conflictes.' , color:'#27ae60'}
@@ -980,4 +980,5 @@ function showFullAnalysis() {
     new ResizeObserver(()=>renderProbList()).observe(document.getElementById('probList'));
   </script>
 </body>
+
 </html>

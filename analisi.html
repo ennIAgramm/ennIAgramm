@@ -27,6 +27,7 @@ body {
   line-height: 1.5;
 }
 
+/* HEADER */
 header {
   background: var(--accent);
   color: #fff;
@@ -55,15 +56,45 @@ header p {
   opacity: 0.9;
 }
 
+/* GRID PRINCIPAL */
 main {
   max-width: 1300px;
   margin: 2.5rem auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 2rem;
   padding: 0 1rem;
 }
 
+main > section {
+  grid-column: span 2;
+}
+
+.highlight-box.half {
+  grid-column: span 3;
+}
+
+.wide-box {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  main {
+    grid-template-columns: 1fr;   /* AQUÍ: solo 1 columna en móvil */
+  }
+
+   main > section,
+  .highlight-box.half,
+  .wide-box {
+    grid-column: 1 / -1;
+  }
+
+  header h1 { font-size: 1.6rem; }
+  header .numero-title { font-size: 2rem; }
+  h2 { font-size: 1.15rem; }
+}
+
+/* CAJAS */
 section {
   background: #fff;
   border-radius: var(--radius);
@@ -102,12 +133,19 @@ ul {
   padding-left: 1.2rem;
 }
 
+/* CAJAS DESTACADAS */
 .highlight-box {
   background: var(--light-blue);
   border-left: 4px solid var(--accent);
   padding: 1.2rem 1rem;
 }
 
+/* esta clase permite que una sección ocupe dos columnas en pantallas grandes */
+.wide-box {
+  grid-column: 1 / -1;
+}
+
+/* BOTÓN VOLVER */
 .back-btn {
   display: inline-block;
   margin: 2rem auto;
@@ -120,6 +158,7 @@ ul {
   text-decoration: none;
   box-shadow: var(--shadow);
   transition: background 0.2s, transform 0.2s;
+  cursor: pointer; 
 }
 
 .back-btn:hover {
@@ -131,23 +170,57 @@ ul {
 section p,
 section li,
 section div {
-  font-size: 0.95rem;   /* misma medida */
-  line-height: 1.6;     /* mismo interlineado */
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 section strong {
-  font-weight: 600;     /* mantener negrita */
+  font-weight: 600;
 }
 
-
-@media (max-width: 768px) {
+/* RESPONSIVE TABLET */
+@media (max-width: 900px) {
   main {
+    margin: 2rem auto;
+    padding: 0 0.75rem;
     grid-template-columns: 1fr;
+  }
+
+  main > section,
+  .highlight-box.half,
+  .wide-box {
+    grid-column: 1 / -1; /* cada card ocupa toda la fila */
   }
 
   header h1 { font-size: 1.6rem; }
   header .numero-title { font-size: 2rem; }
   h2 { font-size: 1.15rem; }
+}
+
+/* RESPONSIVE MÓVIL PEQUEÑO */
+@media (max-width: 600px) {
+  header {
+    padding: 1.6rem 0.8rem 0.9rem 0.8rem;
+  }
+
+  main {
+    margin: 1.8rem auto;
+    gap: 1.4rem;
+  }
+
+  section {
+    padding: 1.2rem 1rem;
+  }
+
+  p, li, section p, section li, section div {
+    font-size: 0.88rem;
+  }
+
+  .back-btn {
+    width: calc(100% - 2rem);
+    max-width: 360px;
+    padding: 11px 18px;
+  }
 }
 </style>
 </head>
@@ -589,11 +662,11 @@ section strong {
         <h2>Ales (Wings)</h2>
         <p>${info.ales}</p>
       </section>
-      <section class="highlight-box" style="grid-column: span 2;">
+      <section class="highlight-box half">
         <h2>Carreres ideals orientatives</h2>
         <p>${info.carreres}</p>
       </section>
-      <section class="highlight-box">
+      <section class="highlight-box half">
         <h2>Com treure el màxim profit</h2>
         <p>${info.profit}</p>
       </section>
@@ -607,3 +680,4 @@ section strong {
 </body>
 
 </html>
+
